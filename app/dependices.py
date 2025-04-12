@@ -14,3 +14,4 @@ def get_db():
         db.close()
 
 db_dep = Annotated[Session, Depends(get_db)]
+

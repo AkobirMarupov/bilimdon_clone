@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response
 
 from app.database  import * 
-from app.schemas.auth_schema import *
+from app.schemas.user_schema import *
 from app.models import User
 from app.utils import *
 from app.dependices import *
