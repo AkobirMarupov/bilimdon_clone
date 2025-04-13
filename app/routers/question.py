@@ -9,13 +9,13 @@ router = APIRouter(prefix="/questions", tags=["questions"])
 
 
 @router.get("/", response_model=list[QuestionResponse])
-async def get_questions(db: db_dep):
-    return db.query(Question).all()
+async def get_questions(session: db_dep):
+    return session.query(Question).all()
 
 
 @router.get("/{id}", response_model=QuestionResponse)
-async def get_question(id: int, db: db_dep):
-    question = db.query(Question).filter(Question.id == id).first()
+async def get_question(id: int, session: db_dep):
+    question = session.query(Question).filter(Question.id == id).first()
 
     if not question:
         raise HTTPException(
@@ -29,7 +29,7 @@ async def get_question(id: int, db: db_dep):
 @router.post("/create/", response_model=QuestionResponse)
 async def create_question(
         question: QuestionCreate,
-        db: db_dep,
+        session: db_dep,
         current_user: current_user_dep
     ):
     db_question = Question(
@@ -37,9 +37,9 @@ async def create_question(
         owner_id=current_user.id
         )
 
-    db.add(db_question)
-    db.commit()
-    db.refresh(db_question)
+    session.add(db_question)
+    session.commit()
+    session.refresh(db_question)
 
     return db_question
 
@@ -48,9 +48,9 @@ async def create_question(
 async def update_question(
         id: int,
         question: QuestionUpdate,
-        db: db_dep
+        session: db_dep
     ):
-    db_question = db.query(Question).filter(Question.id == id).first()
+    db_question = session.query(Question).filter(Question.id == id).first()
 
     if not db_question:
         raise HTTPException(
@@ -62,15 +62,15 @@ async def update_question(
     db_question.description = question.description if question.description else db_question.description
     db_question.topic_id = question.topic_id if question.topic_id else db_question.topic_id
 
-    db.commit()
-    db.refresh(db_question)
+    session.commit()
+    session.refresh(db_question)
 
     return db_question
 
 
 @router.delete("/delete/{id}")
-async def delete_question(id: int, db: db_dep):
-    db_question = db.query(Question).filter(Question.id == id).first()
+async def delete_question(id: int, session: db_dep):
+    db_question = session.query(Question).filter(Question.id == id).first()
 
     if not db_question:
         raise HTTPException(
@@ -78,8 +78,8 @@ async def delete_question(id: int, db: db_dep):
             detail="Question not found."
         )
 
-    db.delete(db_question)
-    db.commit()
+    session.delete(db_question)
+    session.commit()
 
     return {
         "question_id": id,
