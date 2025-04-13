@@ -1,105 +1,87 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from typing import List
-from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException
 
-from app.database import SessionLocal
-from app.schemas.user_schema import QuestionCreateModel, QuestionUpdateModel, QuestionResponseModel
-from app.models import User, Question, Topic
-from app.dependices import db_dep, get_db
+from app.dependices import db_dep, current_user_dep
+from app.models import Question
+from app.schemas.question import QuestionResponse, QuestionCreate, QuestionUpdate
 
 
-qustion_router = APIRouter(
-    prefix= '/questions',
-    tags= ['Questions']
-)
+router = APIRouter(prefix="/questions", tags=["questions"])
 
 
-@qustion_router.get('/', response_model= list[QuestionResponseModel])
-async def get_question(session: db_dep):
-    return session.query(Question).all()
+@router.get("/", response_model=list[QuestionResponse])
+async def get_questions(db: db_dep):
+    return db.query(Question).all()
 
 
+@router.get("/{id}", response_model=QuestionResponse)
+async def get_question(id: int, db: db_dep):
+    question = db.query(Question).filter(Question.id == id).first()
 
-@qustion_router.post('/', response_model= QuestionResponseModel)
-async def create_question(question: QuestionCreateModel, session: User = Depends(get_db)):
+    if not question:
+        raise HTTPException(
+            status_code=404,
+            detail="Question not found."
+        )
 
-    db_topic = session.query(Topic).filter(Topic.id == question.topic_id).first()
+    return question
 
-    if not db_topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
-    
+
+@router.post("/create/", response_model=QuestionResponse)
+async def create_question(
+        question: QuestionCreate,
+        db: db_dep,
+        current_user: current_user_dep
+    ):
     db_question = Question(
-        owner_id=get_db.id,
-        title=question.title,
-        description=question.description,
-        topic_id=question.topic_id
-    )
-    session.add(db_question)
-    session.commit()
-    session.refresh(db_question)
+        **question.model_dump(),
+        owner_id=current_user.id
+        )
+
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
 
     return db_question
 
 
-@qustion_router.get('/{question_id}', response_model= QuestionResponseModel)
-async def read_question(question_id: int, session: User = Depends(get_db)):
-
-    db_question = session.query(Question).filter(Question.id == question_id).first()
+@router.put("/update/{id}", response_model=QuestionResponse)
+async def update_question(
+        id: int,
+        question: QuestionUpdate,
+        db: db_dep
+    ):
+    db_question = db.query(Question).filter(Question.id == id).first()
 
     if not db_question:
-        raise HTTPException(status_code=404, detail="Question not found")
-    
+        raise HTTPException(
+            status_code=404,
+            detail="Question not found."
+        )
+
+    db_question.title = question.title if question.title else db_question.title
+    db_question.description = question.description if question.description else db_question.description
+    db_question.topic_id = question.topic_id if question.topic_id else db_question.topic_id
+
+    db.commit()
+    db.refresh(db_question)
+
     return db_question
 
-@qustion_router.get('/', response_model= list[QuestionResponseModel])
-async def read_questions(
-    session: User = Depends(get_db),
-    skip: int = 0,
-    limit: int = 30
-):
-    questions = session.query(Question).filter(Question.owner_id == get_db.id).offset(skip).limit(limit).all()
-    return questions
 
-
-@qustion_router.put('/{question_id}', response_model= QuestionResponseModel)
-async def update_question(question_id: int, question: QuestionUpdateModel,session: User = Depends(get_db)):
-
-    db_question = session.query(Question).filter(Question.id == question_id, Question.owner_id == get_db.id).first()
+@router.delete("/delete/{id}")
+async def delete_question(id: int, db: db_dep):
+    db_question = db.query(Question).filter(Question.id == id).first()
 
     if not db_question:
-        raise HTTPException(status_code=404, detail="Question not found or you don't have permission")
+        raise HTTPException(
+            status_code=404,
+            detail="Question not found."
+        )
 
-    if question.title:
-        db_question.title = question.title
+    db.delete(db_question)
+    db.commit()
 
-    if question.description is not None:
-        db_question.description = question.description
-
-    if question.topic_id:
-        db_topic = session.query(Topic).filter(Topic.id == question.topic_id).first()
-
-        if not db_topic:
-            raise HTTPException(status_code=404, detail="Topic not found")
-
-        db_question.topic_id = question.topic_id
-
-    db_question.updated_at = datetime.now(timezone.utc)
-    session.commit()
-    session.refresh(db_question)
-
-    return db_question
-
-
-@qustion_router.delete('/{question_id}', response_model= QuestionResponseModel)
-async def delete_question(question_id: int, session: User = Depends(get_db)):
-
-    db_question = session.query(Question).filter(Question.id == question_id, Question.owner_id == get_db.id).first()
-
-    if not db_question:
-        raise HTTPException(status_code= 404, detail= "Bunday id dagi savol topilmadi")
-
-    session.delete(db_question)
-    session.commit()
-
-    return db_question
+    return {
+        "question_id": id,
+        "message": "Question deleted."
+    }
