@@ -7,3 +7,6 @@ class TopicCreate(BaseModel):
 class TopicResponse(BaseModel):
     id: int
     name: str
+
+    class Config:
+        orm_mode = True
