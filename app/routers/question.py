@@ -13,9 +13,9 @@ async def get_questions(session: db_dep):
     return session.query(Question).all()
 
 
-@router.get("/{id}", response_model=QuestionResponse)
-async def get_question(id: int, session: db_dep):
-    question = session.query(Question).filter(Question.id == id).first()
+@router.get("/{question_id}", response_model=QuestionResponse)
+async def get_question(question_id: int, session: db_dep):
+    question = session.query(Question).filter(Question.id == question_id).first()
 
     if not question:
         raise HTTPException(
@@ -32,10 +32,7 @@ async def create_question(
         session: db_dep,
         current_user: current_user_dep
     ):
-    db_question = Question(
-        **question.model_dump(),
-        owner_id=current_user.id
-        )
+    db_question = Question(**question.model_dump(), owner_id= current_user.id)
 
     session.add(db_question)
     session.commit()
@@ -44,13 +41,13 @@ async def create_question(
     return db_question
 
 
-@router.put("/update/{id}", response_model=QuestionResponse)
+@router.put("/update/{question_id}", response_model=QuestionResponse)
 async def update_question(
-        id: int,
+        question_id: int,
         question: QuestionUpdate,
         session: db_dep
     ):
-    db_question = session.query(Question).filter(Question.id == id).first()
+    db_question = session.query(Question).filter(Question.id == question_id).first()
 
     if not db_question:
         raise HTTPException(
@@ -68,9 +65,9 @@ async def update_question(
     return db_question
 
 
-@router.delete("/delete/{id}")
-async def delete_question(id: int, session: db_dep):
-    db_question = session.query(Question).filter(Question.id == id).first()
+@router.delete("/delete/{question_id}")
+async def delete_question(question_id: int, session: db_dep):
+    db_question = session.query(Question).filter(Question.id == question_id).first()
 
     if not db_question:
         raise HTTPException(

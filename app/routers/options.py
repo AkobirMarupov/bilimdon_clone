@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.dependices import db_dep, current_user_dep
-from app.models import Option, Question
+from app.models import Option
 from app.schemas.option import  OptionCreate, OptionUpdate, OptionResponse
 
 
@@ -16,9 +16,9 @@ async def get_options(db: db_dep):
     return db.query(Option).all()
 
 
-@router.get("/{id}", response_model=OptionResponse)
-async def get_option(id: int, db: db_dep):
-    option = db.query(Option).filter(Option.id == id).first()
+@router.get("/{option_id}", response_model=OptionResponse)
+async def get_option(option_id: int, db: db_dep):
+    option = db.query(Option).filter(Option.id == option_id).first()
 
     if not option:
         raise HTTPException(
@@ -57,13 +57,13 @@ async def create_option(
     return db_option
 
 
-@router.put("/update/{id}", response_model=OptionResponse)
+@router.put("/update/{option_id}", response_model=OptionResponse)
 async def update_option(
-        id: int,
+        option_id: int,
         option: OptionUpdate,
         db: db_dep
     ):
-    db_option = db.query(Option).filter(Option.id == id).first()
+    db_option = db.query(Option).filter(Option.id == option_id).first()
 
     if not db_option:
         raise HTTPException(
@@ -80,9 +80,9 @@ async def update_option(
     return db_option
 
 
-@router.delete("/delete/{id}")
-async def delete_option(id: int, db: db_dep):
-    db_option = db.query(Option).filter(Option.id == id).first()
+@router.delete("/delete/{option_id}")
+async def delete_option(option_id: int, db: db_dep):
+    db_option = db.query(Option).filter(Option.id == option_id).first()
 
     if not db_option:
         raise HTTPException(

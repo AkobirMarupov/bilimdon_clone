@@ -1,10 +1,12 @@
+from fastapi import Depends, Request, HTTPException
+from jose import jwt
+
 from typing import Annotated
 
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
+from app.models import User
 from app.utils import *
-from app.models.user import User
-
 
 
 def get_db():
@@ -15,7 +17,6 @@ def get_db():
         db.close()
 
 db_dep = Annotated[Session, Depends(get_db)]
-
 
 
 def get_current_user(
@@ -57,7 +58,7 @@ def get_current_user(
 def get_admin_user(
     user: User = Depends(get_current_user)
 ):
-    if user.role != "admin":
+    if not (user.is_staff and user.is_superuser):
         raise HTTPException(
             status_code=403,
             detail="You do not have admin privileges."
@@ -66,3 +67,4 @@ def get_admin_user(
     return user
 
 current_user_dep = Annotated[User, Depends(get_current_user)]
+admin_user_dep = Annotated[User, Depends(get_admin_user)]
