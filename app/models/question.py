@@ -1,8 +1,9 @@
+from fastapi import Request
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, DateTime, Integer, ForeignKey
+from sqlalchemy import String, DateTime, Date, Integer, Boolean, ForeignKey
 
-from datetime import datetime, timezone
-from typing import  List
+from datetime import datetime, date, timezone
+from typing import Optional, List
 
 from app.database import Base
 
@@ -19,7 +20,10 @@ class Question(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
 
+    topic: Mapped["Topic"] = relationship("Topic", back_populates="questions")
     option_ids: Mapped[List["Option"]] = relationship(back_populates="question")
     games: Mapped[List["GameQuestion"]] = relationship(back_populates="question")
     submissions: Mapped[List["Submission"]] = relationship(back_populates="question")
 
+    async def _admin_repr__(self, request: Request):
+        return self.title

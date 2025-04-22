@@ -1,11 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, DateTime, Date, Integer, Boolean, ForeignKey
-
-from datetime import datetime, date, timezone
-from typing import Optional, List
+from sqlalchemy import DateTime, Integer, ForeignKey
+from datetime import datetime, timezone
 
 from app.database import Base
-
 
 
 class Participation(Base):
@@ -21,3 +18,5 @@ class Participation(Base):
 
     user: Mapped["User"] = relationship("User", back_populates="participations")
     game: Mapped["Game"] = relationship("Game", back_populates="participations")
+
+

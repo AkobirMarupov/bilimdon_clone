@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from datetime import datetime
 
 
@@ -39,3 +40,6 @@ class GameUpdate(BaseModel):
     topic_id: int | None = None
 
 
+class GameSelectQuestion(BaseModel):
+    question_id: int
+    game_id: int

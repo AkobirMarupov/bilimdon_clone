@@ -1,14 +1,10 @@
 from fastapi import APIRouter, HTTPException
 
 from app.dependices import db_dep, current_user_dep
-from app.models import Option
-from app.schemas.option import  OptionCreate, OptionUpdate, OptionResponse
+from app.models import Option, Question
+from app.schemas import OptionCreate, OptionUpdate, OptionResponse
 
-
-router = APIRouter(
-    prefix="/options",
-    tags=["options"]
- )
+router = APIRouter(prefix="/options", tags=["options"])
 
 
 @router.get("/", response_model=list[OptionResponse])
@@ -16,9 +12,9 @@ async def get_options(db: db_dep):
     return db.query(Option).all()
 
 
-@router.get("/{option_id}", response_model=OptionResponse)
-async def get_option(option_id: int, db: db_dep):
-    option = db.query(Option).filter(Option.id == option_id).first()
+@router.get("/{id}", response_model=OptionResponse)
+async def get_option(id: int, db: db_dep):
+    option = db.query(Option).filter(Option.id == id).first()
 
     if not option:
         raise HTTPException(
@@ -34,7 +30,7 @@ async def create_option(
         option: OptionCreate,
         db: db_dep,
         current_user: current_user_dep
-    ):
+):
     existing_correct_option = db.query(Option).filter(
         Option.question_id == option.question_id,
         Option.is_correct == True
@@ -48,7 +44,7 @@ async def create_option(
 
     db_option = Option(
         **option.model_dump()
-        )
+    )
 
     db.add(db_option)
     db.commit()
@@ -57,13 +53,13 @@ async def create_option(
     return db_option
 
 
-@router.put("/update/{option_id}", response_model=OptionResponse)
+@router.put("/update/{id}", response_model=OptionResponse)
 async def update_option(
-        option_id: int,
+        id: int,
         option: OptionUpdate,
         db: db_dep
-    ):
-    db_option = db.query(Option).filter(Option.id == option_id).first()
+):
+    db_option = db.query(Option).filter(Option.id == id).first()
 
     if not db_option:
         raise HTTPException(
@@ -80,9 +76,9 @@ async def update_option(
     return db_option
 
 
-@router.delete("/delete/{option_id}")
-async def delete_option(option_id: int, db: db_dep):
-    db_option = db.query(Option).filter(Option.id == option_id).first()
+@router.delete("/delete/{id}")
+async def delete_option(id: int, db: db_dep):
+    db_option = db.query(Option).filter(Option.id == id).first()
 
     if not db_option:
         raise HTTPException(

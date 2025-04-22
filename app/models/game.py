@@ -1,8 +1,9 @@
+from urllib.request import Request
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, DateTime, Integer, ForeignKey
+from sqlalchemy import String, DateTime, Date, Integer, Boolean, ForeignKey
 
-from datetime import datetime
-from typing import List
+from datetime import datetime, date, timezone
+from typing import Optional, List
 
 from app.database import Base
 
@@ -22,7 +23,12 @@ class Game(Base):
     owner: Mapped["User"] = relationship("User", back_populates="owned_games")
     questions: Mapped[List["GameQuestion"]] = relationship(back_populates="game")
     topic: Mapped["Topic"] = relationship("Topic", back_populates="games")
+    submissions: Mapped["Submission"] = relationship("Submission", back_populates="game")
     participations: Mapped[List["Participation"]] = relationship(back_populates="game")
+
+
+    async def _admin_repr__(self, request: Request):
+        return self.title
 
 
 class GameQuestion(Base):

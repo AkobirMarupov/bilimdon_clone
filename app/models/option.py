@@ -1,7 +1,8 @@
+from fastapi import Request
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import String, DateTime, Integer, Boolean, ForeignKey
 
-from datetime import datetime,timezone
+from datetime import datetime, timezone
 from typing import List
 
 from app.database import Base
@@ -19,3 +20,7 @@ class Option(Base):
 
     question = relationship("Question", back_populates="option_ids")
     submissions: Mapped[List["Submission"]] = relationship(back_populates="option")
+
+
+    async def _admin_repr__(self, request: Request):
+        return self.title

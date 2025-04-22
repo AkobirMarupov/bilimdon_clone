@@ -1,5 +1,5 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, DateTime, Date
+from sqlalchemy import String, DateTime, Date, Integer, Boolean, ForeignKey
 
 from datetime import datetime, date, timezone
 from typing import Optional, List
@@ -25,3 +25,4 @@ class User(Base):
     owned_games: Mapped[List["Game"]] = relationship(back_populates="owner")
     submissions: Mapped[List["Submission"]] = relationship(back_populates="owner")
     participations: Mapped[List["Participation"]] = relationship(back_populates="user")
+

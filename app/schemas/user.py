@@ -1,21 +1,16 @@
-from pydantic import BaseModel
-
-
+from pydantic import BaseModel, EmailStr
 
 class AuthRegistration(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class AuthRegistrationResponse(BaseModel):
     id: int
-    email: str
+    email: EmailStr
     username: str
     is_staff: bool
     is_superuser: bool
 
 class AuthLogin(BaseModel):
-    email: str  
+    email: str
     password: str
-
-
-

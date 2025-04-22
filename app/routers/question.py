@@ -2,20 +2,19 @@ from fastapi import APIRouter, HTTPException
 
 from app.dependices import db_dep, current_user_dep
 from app.models import Question
-from app.schemas.question import QuestionResponse, QuestionCreate, QuestionUpdate
-
+from app.schemas import QuestionResponse, QuestionCreate, QuestionUpdate
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
 
 @router.get("/", response_model=list[QuestionResponse])
-async def get_questions(session: db_dep):
-    return session.query(Question).all()
+async def get_questions(db: db_dep):
+    return db.query(Question).all()
 
 
-@router.get("/{question_id}", response_model=QuestionResponse)
-async def get_question(question_id: int, session: db_dep):
-    question = session.query(Question).filter(Question.id == question_id).first()
+@router.get("/{id}", response_model=QuestionResponse)
+async def get_question(id: int, db: db_dep):
+    question = db.query(Question).filter(Question.id == id).first()
 
     if not question:
         raise HTTPException(
@@ -29,25 +28,28 @@ async def get_question(question_id: int, session: db_dep):
 @router.post("/create/", response_model=QuestionResponse)
 async def create_question(
         question: QuestionCreate,
-        session: db_dep,
+        db: db_dep,
         current_user: current_user_dep
-    ):
-    db_question = Question(**question.model_dump(), owner_id= current_user.id)
+):
+    db_question = Question(
+        **question.model_dump(),
+        owner_id=current_user.id
+    )
 
-    session.add(db_question)
-    session.commit()
-    session.refresh(db_question)
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
 
     return db_question
 
 
-@router.put("/update/{question_id}", response_model=QuestionResponse)
+@router.put("/update/{id}", response_model=QuestionResponse)
 async def update_question(
-        question_id: int,
+        id: int,
         question: QuestionUpdate,
-        session: db_dep
-    ):
-    db_question = session.query(Question).filter(Question.id == question_id).first()
+        db: db_dep
+):
+    db_question = db.query(Question).filter(Question.id == id).first()
 
     if not db_question:
         raise HTTPException(
@@ -59,15 +61,15 @@ async def update_question(
     db_question.description = question.description if question.description else db_question.description
     db_question.topic_id = question.topic_id if question.topic_id else db_question.topic_id
 
-    session.commit()
-    session.refresh(db_question)
+    db.commit()
+    db.refresh(db_question)
 
     return db_question
 
 
-@router.delete("/delete/{question_id}")
-async def delete_question(question_id: int, session: db_dep):
-    db_question = session.query(Question).filter(Question.id == question_id).first()
+@router.delete("/delete/{id}")
+async def delete_question(id: int, db: db_dep):
+    db_question = db.query(Question).filter(Question.id == id).first()
 
     if not db_question:
         raise HTTPException(
@@ -75,10 +77,14 @@ async def delete_question(question_id: int, session: db_dep):
             detail="Question not found."
         )
 
-    session.delete(db_question)
-    session.commit()
+    db.delete(db_question)
+    db.commit()
 
     return {
         "question_id": id,
         "message": "Question deleted."
     }
+
+# @router.get("{id}/options/", response_model=QuestionWithOptionsResponse)
+# async def get_question_with_options(id: int, db: db_dep):
+#     pass

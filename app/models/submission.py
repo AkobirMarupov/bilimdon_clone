@@ -1,8 +1,8 @@
+from fastapi import Request
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, DateTime, Date, Integer, Boolean, ForeignKey
+from sqlalchemy import DateTime, Integer, Boolean, ForeignKey
 
-from datetime import datetime, date, timezone
-from typing import Optional, List
+from datetime import datetime, timezone
 
 from app.database import Base
 
@@ -13,6 +13,7 @@ class Submission(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    game_id: Mapped[int] = mapped_column(Integer, ForeignKey("games.id"))
     question_id: Mapped[int] = mapped_column(Integer, ForeignKey("questions.id"))
     option_id: Mapped[int] = mapped_column(Integer, ForeignKey("options.id"))
     is_correct: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -21,3 +22,7 @@ class Submission(Base):
     owner = relationship("User", back_populates="submissions")
     question = relationship("Question", back_populates="submissions")
     option = relationship("Option", back_populates="submissions")
+    game = relationship("Game", back_populates="submissions")
+
+    async def _admin_repr__(self, request: Request):
+        return f"Submission of user with id = {self.user_id}"
